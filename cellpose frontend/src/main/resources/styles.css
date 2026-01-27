@@ -1,0 +1,281 @@
+/* Root styling */
+.root {
+    -fx-background-color: #1e1e1e;
+    -fx-font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #ffffff;
+}
+
+/* App Container */
+.app-container {
+    -fx-background-color: #1e1e1e;
+}
+
+/* Menu Bar */
+.menu-bar {
+    -fx-background-color: #2d2d2d;
+    -fx-border-color: #444;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 12 8 12;
+}
+
+.menu-bar .menu {
+    -fx-padding: 6 14 6 14;
+    -fx-text-fill: #ffffff;
+}
+
+.menu-bar .menu:hover {
+    -fx-background-color: #3d3d3d;
+}
+
+.menu-bar .menu .label {
+    -fx-text-fill: #ffffff;
+}
+
+/* Sidebar */
+.sidebar {
+    -fx-background-color: #252525;
+    -fx-padding: 15;
+    -fx-border-color: #444;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-scroll {
+    -fx-background-color: #252525;
+    -fx-background: #252525;
+}
+
+.sidebar-scroll .viewport {
+    -fx-background-color: #252525;
+}
+
+.sidebar-scroll .scroll-bar {
+    -fx-background-color: #2d2d2d;
+}
+
+/* Section */
+.section {
+    -fx-spacing: 10;
+}
+
+.section-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-text-fill: #4fc3f7;
+}
+
+/* Controls */
+.control-row {
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.control-row .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 13px;
+}
+
+/* Text Fields */
+.text-field {
+    -fx-background-color: #3d3d3d;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #888;
+    -fx-border-color: #555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 5 8 5 8;
+}
+
+.text-field:focused {
+    -fx-border-color: #4fc3f7;
+}
+
+/* Spinners */
+.spinner {
+    -fx-background-color: #3d3d3d;
+}
+
+.spinner .text-field {
+    -fx-background-color: #3d3d3d;
+    -fx-text-fill: #ffffff;
+}
+
+.spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: #4d4d4d;
+}
+
+.spinner .increment-arrow-button:hover,
+.spinner .decrement-arrow-button:hover {
+    -fx-background-color: #5d5d5d;
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: #4d4d4d;
+    -fx-text-fill: #ffffff;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #5d5d5d;
+}
+
+.button:pressed {
+    -fx-background-color: #3d3d3d;
+}
+
+.primary-button {
+    -fx-background-color: #2196F3;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.primary-button:hover {
+    -fx-background-color: #1976D2;
+}
+
+.primary-button:disabled {
+    -fx-opacity: 0.5;
+}
+
+/* ComboBox */
+.combo-box {
+    -fx-background-color: #3d3d3d;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: #3d3d3d;
+    -fx-text-fill: #ffffff;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #3d3d3d;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #3d3d3d;
+    -fx-text-fill: #ffffff;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #4d4d4d;
+}
+
+.dropdown {
+    -fx-background-color: #3d3d3d;
+}
+
+/* CheckBox */
+.check-box {
+    -fx-text-fill: #ffffff;
+}
+
+.check-box .box {
+    -fx-background-color: #3d3d3d;
+    -fx-border-color: #555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #4fc3f7;
+}
+
+.checkbox-group {
+    -fx-spacing: 6;
+}
+
+/* Sliders */
+.slider {
+    -fx-background-color: #3d3d3d;
+}
+
+.slider .track {
+    -fx-background-color: #555;
+}
+
+.slider .thumb {
+    -fx-background-color: #4fc3f7;
+}
+
+.slider-label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 13px;
+}
+
+.color-slider .thumb {
+    -fx-background-color: #ffffff;
+}
+
+.red-slider .track {
+    -fx-background-color: linear-gradient(to right, #000, #ff0000);
+}
+
+.green-slider .track {
+    -fx-background-color: linear-gradient(to right, #000, #00ff00);
+}
+
+.blue-slider .track {
+    -fx-background-color: linear-gradient(to right, #000, #0000ff);
+}
+
+/* Status Label */
+.status-label {
+    -fx-padding: 8;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+    -fx-wrap-text: true;
+}
+
+.status-success {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: #ffffff;
+}
+
+.status-error {
+    -fx-background-color: #f44336;
+    -fx-text-fill: #ffffff;
+}
+
+.status-loading {
+    -fx-background-color: #FF9800;
+    -fx-text-fill: #ffffff;
+}
+
+/* Help Text */
+.help-text {
+    -fx-fill: #888;
+    -fx-font-size: 11px;
+    -fx-font-style: italic;
+}
+
+/* Canvas Area */
+.canvas-area {
+    -fx-background-color: #000000;
+}
+
+/* View Slider Row */
+.view-slider-row {
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.gray-label {
+    -fx-text-fill: #888;
+}
+
+.red-label {
+    -fx-text-fill: #ff0000;
+}
+
+.green-label {
+    -fx-text-fill: #00ff00;
+}
+
+.blue-label {
+    -fx-text-fill: #4fc3f7;
+}
