@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+cellpose
+torch
+opencv-python-headless
+imagecodecs
+tifffile

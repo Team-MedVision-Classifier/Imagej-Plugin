@@ -1,0 +1,7 @@
+__pycache__/
+.idea/
+.vscode/
+venv_v3/
+venv_v4/
+outputs/
+models/
