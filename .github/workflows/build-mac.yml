@@ -2,8 +2,6 @@ name: build-mac
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
   build:
@@ -18,9 +16,9 @@ jobs:
       - name: Create venvs and install deps
         working-directory: cellpose backend
         run: |
-          python -m venv venv_v3
+          python -m venv --copies venv_v3
           ./venv_v3/bin/pip install -r requirements_v3.txt
-          python -m venv venv_v4
+          python -m venv --copies venv_v4
           ./venv_v4/bin/pip install -r requirements_v4.txt
 
       - name: Build plugin
