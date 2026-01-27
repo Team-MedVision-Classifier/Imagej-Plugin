@@ -1,0 +1,36 @@
+name: build-windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Create venvs and install deps
+        working-directory: cellpose backend
+        shell: pwsh
+        run: |
+          python -m venv venv_v3
+          .\venv_v3\Scripts\pip install -r requirements_v3.txt
+          python -m venv venv_v4
+          .\venv_v4\Scripts\pip install -r requirements_v4.txt
+
+      - name: Build plugin
+        working-directory: cellpose frontend
+        shell: pwsh
+        run: mvn -q -DskipTests package
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: cellpose-plugin-windows
+          path: cellpose frontend/target/*.jar
