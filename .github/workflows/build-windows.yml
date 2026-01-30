@@ -13,13 +13,65 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Download standalone Python
+        working-directory: cellpose backend
+        shell: pwsh
+        env:
+          PYBS_RELEASE: latest
+          PYBS_ASSET_REGEX: '^cpython-3\.10\..*-windows.*-install_only\.tar\.gz$'
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import urllib.request
+
+          release = os.environ.get("PYBS_RELEASE", "latest")
+          api = f"https://api.github.com/repos/astral-sh/python-build-standalone/releases/{release}"
+          data = json.load(urllib.request.urlopen(api))
+          pattern = re.compile(os.environ["PYBS_ASSET_REGEX"])
+
+          url = None
+          name = None
+          for asset in data.get("assets", []):
+              if pattern.search(asset.get("name", "")):
+                  url = asset.get("browser_download_url")
+                  name = asset.get("name")
+                  break
+          if not url:
+              raise SystemExit("No matching standalone Python asset found.")
+
+          print(f"Downloading {name}")
+          urllib.request.urlretrieve(url, "pybs.tar.gz")
+          PY
+
+          if (Test-Path py_standalone) { Remove-Item -Recurse -Force py_standalone }
+          New-Item -ItemType Directory -Path py_standalone | Out-Null
+          tar -xzf pybs.tar.gz -C py_standalone
+
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          root = Path("py_standalone")
+          candidates = list(root.rglob("python.exe"))
+          for c in candidates:
+              if c.is_file():
+                  with open(os.environ["GITHUB_ENV"], "a") as f:
+                      f.write(f"PY_STANDALONE={c}\n")
+                  print(f"PY_STANDALONE={c}")
+                  break
+          else:
+              raise SystemExit("Standalone python.exe not found after extract.")
+          PY
+
       - name: Create venvs and install deps
         working-directory: cellpose backend
         shell: pwsh
         run: |
-          python -m venv venv_v3
+          & "$env:PY_STANDALONE" -m venv venv_v3
           .\venv_v3\Scripts\pip install -r requirements_v3.txt
-          python -m venv venv_v4
+          & "$env:PY_STANDALONE" -m venv venv_v4
           .\venv_v4\Scripts\pip install -r requirements_v4.txt
 
       - name: Build plugin
