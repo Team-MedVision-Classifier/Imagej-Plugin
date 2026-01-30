@@ -17,7 +17,7 @@ jobs:
         working-directory: cellpose backend
         env:
           PYBS_RELEASE: latest
-          PYBS_ASSET_REGEX: '^cpython-3\.10\..*-apple-darwin.*-install_only\.tar\.gz$'
+          PYBS_ASSET_REGEX: '^cpython-3\.10\..*-aarch64-apple-darwin.*-install_only\.tar\.gz$'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python - <<'PY'
@@ -75,9 +75,11 @@ jobs:
       - name: Create venvs and install deps
         working-directory: cellpose backend
         run: |
-          "$PY_STANDALONE" -m venv --copies venv_v3
+          "$PY_STANDALONE" -m venv --without-pip venv_v3
+          curl -sS https://bootstrap.pypa.io/get-pip.py | ./venv_v3/bin/python
           ./venv_v3/bin/pip install -r requirements_v3.txt
-          "$PY_STANDALONE" -m venv --copies venv_v4
+          "$PY_STANDALONE" -m venv --without-pip venv_v4
+          curl -sS https://bootstrap.pypa.io/get-pip.py | ./venv_v4/bin/python
           ./venv_v4/bin/pip install -r requirements_v4.txt
 
       - name: Build plugin
