@@ -19,51 +19,19 @@ jobs:
         env:
           PYBS_RELEASE: latest
           PYBS_ASSET_REGEX: '^cpython-3\.10\..*-windows.*-install_only\.tar\.gz$'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python - <<'PY'
-          import json
-          import os
-          import re
-          import urllib.request
-
-          release = os.environ.get("PYBS_RELEASE", "latest")
-          api = f"https://api.github.com/repos/astral-sh/python-build-standalone/releases/{release}"
-          data = json.load(urllib.request.urlopen(api))
-          pattern = re.compile(os.environ["PYBS_ASSET_REGEX"])
-
-          url = None
-          name = None
-          for asset in data.get("assets", []):
-              if pattern.search(asset.get("name", "")):
-                  url = asset.get("browser_download_url")
-                  name = asset.get("name")
-                  break
-          if not url:
-              raise SystemExit("No matching standalone Python asset found.")
-
-          print(f"Downloading {name}")
-          urllib.request.urlretrieve(url, "pybs.tar.gz")
-          PY
+          python -c "import json, os, re, urllib.request; release=os.environ.get('PYBS_RELEASE','latest'); api=f'https://api.github.com/repos/astral-sh/python-build-standalone/releases/{release}'; token=os.environ.get('GITHUB_TOKEN',''); headers={'Authorization': 'Bearer ' + token, 'User-Agent': 'cellpose-plugin-builder', 'Accept': 'application/vnd.github+json'}; req=urllib.request.Request(api, headers=headers); data=json.load(urllib.request.urlopen(req)); pattern=re.compile(os.environ['PYBS_ASSET_REGEX']); url=name=None;\
+          [ (lambda a: (globals().update(url=a.get('browser_download_url'), name=a.get('name')))) (a) for a in data.get('assets', []) if pattern.search(a.get('name','')) and (globals().get('url') is None) ];\
+          (url is not None) or (_ for _ in ()).throw(SystemExit('No matching standalone Python asset found.'));\
+          print(f'Downloading {name}'); urllib.request.urlretrieve(url, 'pybs.tar.gz')"
 
           if (Test-Path py_standalone) { Remove-Item -Recurse -Force py_standalone }
           New-Item -ItemType Directory -Path py_standalone | Out-Null
           tar -xzf pybs.tar.gz -C py_standalone
 
-          python - <<'PY'
-          from pathlib import Path
-          import os
-
-          root = Path("py_standalone")
-          candidates = list(root.rglob("python.exe"))
-          for c in candidates:
-              if c.is_file():
-                  with open(os.environ["GITHUB_ENV"], "a") as f:
-                      f.write(f"PY_STANDALONE={c}\n")
-                  print(f"PY_STANDALONE={c}")
-                  break
-          else:
-              raise SystemExit("Standalone python.exe not found after extract.")
-          PY
+            python -c "from pathlib import Path; import os; root=Path('py_standalone'); candidates=list(root.rglob('python.exe'));\
+            next((lambda c: (open(os.environ['GITHUB_ENV'],'a').write(f'PY_STANDALONE={c}\\n'), print(f'PY_STANDALONE={c}')))(c) for c in candidates if c.is_file()), None) or (_ for _ in ()).throw(SystemExit('Standalone python.exe not found after extract.'))"
 
       - name: Create venvs and install deps
         working-directory: cellpose backend

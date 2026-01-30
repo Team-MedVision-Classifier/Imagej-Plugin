@@ -18,6 +18,7 @@ jobs:
         env:
           PYBS_RELEASE: latest
           PYBS_ASSET_REGEX: '^cpython-3\.10\..*-apple-darwin.*-install_only\.tar\.gz$'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python - <<'PY'
           import json
@@ -27,7 +28,15 @@ jobs:
 
           release = os.environ.get("PYBS_RELEASE", "latest")
           api = f"https://api.github.com/repos/astral-sh/python-build-standalone/releases/{release}"
-          data = json.load(urllib.request.urlopen(api))
+          req = urllib.request.Request(
+              api,
+              headers={
+                  "Authorization": f"Bearer {os.environ.get('GITHUB_TOKEN', '')}",
+                  "User-Agent": "cellpose-plugin-builder",
+                  "Accept": "application/vnd.github+json",
+              },
+          )
+          data = json.load(urllib.request.urlopen(req))
           pattern = re.compile(os.environ["PYBS_ASSET_REGEX"])
 
           url = None
