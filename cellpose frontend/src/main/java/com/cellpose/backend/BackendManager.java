@@ -185,26 +185,64 @@ public class BackendManager {
 
     private void fixUnixPythonScript(Path backendDir, String venvName, String pyHome) {
         Path binDir = backendDir.resolve(venvName).resolve("bin");
-        String[] scripts = {"python", "python3", "pip", "pip3"};
-        String newShebang = "#!" + pyHome + "/bin/python3";
+        Path pyStandalone = backendDir.resolve("py_standalone").resolve("python").resolve("bin").resolve("python3");
+        Path venvPython3 = binDir.resolve("python3");
+        Path venvPython = binDir.resolve("python");
 
-        for (String script : scripts) {
-            Path scriptPath = binDir.resolve(script);
-            if (Files.exists(scriptPath) && !Files.isSymbolicLink(scriptPath)) {
+        // Ensure venv python binaries are real binaries (symlinks are lost in JAR)
+        ensurePythonBinary(venvPython3, pyStandalone, venvName + "/bin/python3");
+        ensurePythonBinary(venvPython, venvPython3, venvName + "/bin/python");
+
+        // Fix sh shims like uvicorn/pip that exec a hardcoded python path
+        String[] shims = {"uvicorn", "pip", "pip3"};
+        for (String shim : shims) {
+            Path shimPath = binDir.resolve(shim);
+            if (Files.exists(shimPath) && !Files.isSymbolicLink(shimPath)) {
                 try {
-                    java.util.List<String> lines = Files.readAllLines(scriptPath, StandardCharsets.UTF_8);
-                    if (!lines.isEmpty() && lines.get(0).startsWith("#!")) {
-                        lines.set(0, newShebang);
-                        Files.write(scriptPath, lines, StandardCharsets.UTF_8);
-                        // Ensure executable
-                        scriptPath.toFile().setExecutable(true, false);
-                        IJ.log("Fixed shebang in " + venvName + "/bin/" + script);
+                    java.util.List<String> lines = Files.readAllLines(shimPath, StandardCharsets.UTF_8);
+                    if (lines.size() >= 2 && lines.get(0).startsWith("#!/bin/sh") && lines.get(1).contains("exec")) {
+                        lines.set(1, "'''exec' \"" + venvPython.toString() + "\" \"$0\" \"$@\"");
+                        Files.write(shimPath, lines, StandardCharsets.UTF_8);
+                        shimPath.toFile().setExecutable(true, false);
+                        IJ.log("Fixed shim in " + venvName + "/bin/" + shim);
                     }
                 } catch (IOException e) {
-                    IJ.log("Warning: Could not fix shebang for " + venvName + "/bin/" + script + ": " + e.getMessage());
+                    IJ.log("Warning: Could not fix shim for " + venvName + "/bin/" + shim + ": " + e.getMessage());
                 }
             }
         }
+    }
+
+    private void ensurePythonBinary(Path target, Path source, String label) {
+        try {
+            if (!Files.exists(source)) {
+                return;
+            }
+            if (!Files.exists(target) || looksLikeText(target)) {
+                Files.createDirectories(target.getParent());
+                Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                target.toFile().setExecutable(true, false);
+                IJ.log("Rebuilt python binary: " + label);
+            }
+        } catch (IOException e) {
+            IJ.log("Warning: Could not rebuild python binary " + label + ": " + e.getMessage());
+        }
+    }
+
+    private boolean looksLikeText(Path path) {
+        try {
+            long size = Files.size(path);
+            if (size < 1024) {
+                return true;
+            }
+            byte[] head = Files.readAllBytes(path);
+            if (head.length >= 2 && head[0] == '#' && head[1] == '!') {
+                return true;
+            }
+        } catch (IOException e) {
+            return true;
+        }
+        return false;
     }
 
     private void extractResourceDirectory(String resourceRoot, Path targetDir) throws IOException {
