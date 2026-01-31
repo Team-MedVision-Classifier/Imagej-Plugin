@@ -141,8 +141,41 @@ public class BackendManager {
 
         Files.createDirectories(targetDir);
         extractResourceDirectory(RESOURCE_ROOT, targetDir);
+        fixVenvPaths(targetDir);
         Files.write(marker, "ok".getBytes(StandardCharsets.UTF_8));
         return targetDir;
+    }
+
+    private void fixVenvPaths(Path backendDir) {
+        // Fix pyvenv.cfg files to point to the local py_standalone instead of build paths
+        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+        String pyHome;
+        if (isWindows) {
+            pyHome = backendDir.resolve("py_standalone").resolve("python").toString();
+        } else {
+            pyHome = backendDir.resolve("py_standalone").resolve("python").toString();
+        }
+
+        for (String venvName : new String[]{"venv_v3", "venv_v4"}) {
+            Path cfgPath = backendDir.resolve(venvName).resolve("pyvenv.cfg");
+            if (Files.exists(cfgPath)) {
+                try {
+                    java.util.List<String> lines = Files.readAllLines(cfgPath, StandardCharsets.UTF_8);
+                    java.util.List<String> newLines = new java.util.ArrayList<>();
+                    for (String line : lines) {
+                        if (line.startsWith("home = ") || line.startsWith("home=")) {
+                            newLines.add("home = " + pyHome);
+                        } else {
+                            newLines.add(line);
+                        }
+                    }
+                    Files.write(cfgPath, newLines, StandardCharsets.UTF_8);
+                    IJ.log("Fixed pyvenv.cfg for " + venvName);
+                } catch (IOException e) {
+                    IJ.log("Warning: Could not fix pyvenv.cfg for " + venvName + ": " + e.getMessage());
+                }
+            }
+        }
     }
 
     private void extractResourceDirectory(String resourceRoot, Path targetDir) throws IOException {
@@ -210,13 +243,33 @@ public class BackendManager {
     private Path findPythonExecutable(Path baseDir) {
         boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
         String binDir = isWindows ? "Scripts" : "bin";
-        String exe = isWindows ? "python.exe" : "python";
+        String exe = isWindows ? "python.exe" : "python3";
 
+        // Check venv_v4 first (CellposeSAM) - this has the FastAPI server deps
         Path v4 = baseDir.resolve("venv_v4").resolve(binDir).resolve(exe);
         if (Files.exists(v4)) return v4;
+        // Try python.exe as fallback on Windows
+        if (isWindows) {
+            v4 = baseDir.resolve("venv_v4").resolve(binDir).resolve("python.exe");
+            if (Files.exists(v4)) return v4;
+        }
 
+        // Check venv_v3 (Cellpose 3.1)
         Path v3 = baseDir.resolve("venv_v3").resolve(binDir).resolve(exe);
         if (Files.exists(v3)) return v3;
+        if (isWindows) {
+            v3 = baseDir.resolve("venv_v3").resolve(binDir).resolve("python.exe");
+            if (Files.exists(v3)) return v3;
+        }
+
+        // Check standalone Python as last resort
+        if (isWindows) {
+            Path standalone = baseDir.resolve("py_standalone").resolve("python").resolve("python.exe");
+            if (Files.exists(standalone)) return standalone;
+        } else {
+            Path standalone = baseDir.resolve("py_standalone").resolve("python").resolve("bin").resolve("python3");
+            if (Files.exists(standalone)) return standalone;
+        }
 
         return null;
     }
