@@ -175,6 +175,35 @@ public class BackendManager {
                     IJ.log("Warning: Could not fix pyvenv.cfg for " + venvName + ": " + e.getMessage());
                 }
             }
+
+            // On Unix, also fix shebang in bin/python3 script
+            if (!isWindows) {
+                fixUnixPythonScript(backendDir, venvName, pyHome);
+            }
+        }
+    }
+
+    private void fixUnixPythonScript(Path backendDir, String venvName, String pyHome) {
+        Path binDir = backendDir.resolve(venvName).resolve("bin");
+        String[] scripts = {"python", "python3", "pip", "pip3"};
+        String newShebang = "#!" + pyHome + "/bin/python3";
+
+        for (String script : scripts) {
+            Path scriptPath = binDir.resolve(script);
+            if (Files.exists(scriptPath) && !Files.isSymbolicLink(scriptPath)) {
+                try {
+                    java.util.List<String> lines = Files.readAllLines(scriptPath, StandardCharsets.UTF_8);
+                    if (!lines.isEmpty() && lines.get(0).startsWith("#!")) {
+                        lines.set(0, newShebang);
+                        Files.write(scriptPath, lines, StandardCharsets.UTF_8);
+                        // Ensure executable
+                        scriptPath.toFile().setExecutable(true, false);
+                        IJ.log("Fixed shebang in " + venvName + "/bin/" + script);
+                    }
+                } catch (IOException e) {
+                    IJ.log("Warning: Could not fix shebang for " + venvName + "/bin/" + script + ": " + e.getMessage());
+                }
+            }
         }
     }
 
