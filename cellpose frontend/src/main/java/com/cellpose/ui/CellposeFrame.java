@@ -2,6 +2,7 @@ package com.cellpose.ui;
 
 import ij.ImagePlus;
 import ij.IJ;
+import com.cellpose.backend.BackendManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ public class CellposeFrame extends JFrame {
     private ImagePlus imagePlus;
     private List<Cell> cells;
     private ImageData imageData;
+    private BackendManager backendManager;
     
     private SegmentationPanel segmentationPanel;
     private DisplayPanel displayPanel;
@@ -27,11 +29,18 @@ public class CellposeFrame extends JFrame {
         this.imagePlus = imp;
         this.cells = new ArrayList<>();
         this.imageData = new ImageData(imp.getWidth(), imp.getHeight(), imp.getTitle());
+        this.backendManager = new BackendManager();
         
         initializeUI();
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1200, 800);
         setLocationRelativeTo(null);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                backendManager.stop();
+            }
+        });
     }
 
     public void setBackendUrl(String backendUrl) {
@@ -107,7 +116,7 @@ public class CellposeFrame extends JFrame {
         sidebar.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
         // Segmentation section
-        segmentationPanel = new SegmentationPanel(imagePlus, cells, this::updateCells);
+        segmentationPanel = new SegmentationPanel(imagePlus, cells, this::updateCells, backendManager);
         sidebar.add(segmentationPanel);
         sidebar.add(Box.createVerticalStrut(20));
         

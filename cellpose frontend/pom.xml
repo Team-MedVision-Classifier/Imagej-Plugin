@@ -64,11 +64,6 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
             </resource>
-            <resource>
-                <directory>../cellpose backend</directory>
-                <targetPath>backend</targetPath>
-                <filtering>false</filtering>
-            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -117,6 +112,28 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>bundled-backend</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>false</filtering>
+                    </resource>
+                    <resource>
+                        <directory>../cellpose backend</directory>
+                        <targetPath>backend</targetPath>
+                        <filtering>false</filtering>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+        <profile>
+            <id>frontend-only</id>
+        </profile>
+    </profiles>
 
     <repositories>
         <repository>

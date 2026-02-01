@@ -6,6 +6,7 @@ import ij.gui.Overlay;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import com.cellpose.model.Cell;
+import com.cellpose.backend.BackendManager;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -34,6 +35,8 @@ public class SegmentationPanel extends JPanel {
     private ImagePlus imagePlus;
     private List<Cell> cells;
     private Consumer<List<Cell>> cellUpdateCallback;
+    private BackendManager backendManager;
+    private boolean backendStarting = false;
 
     private JComboBox<String> modelTypeCombo;
     private JComboBox<String> modelNameCombo;
@@ -43,6 +46,7 @@ public class SegmentationPanel extends JPanel {
     private JCheckBox useGpuCheckBox;
 
     private JTextField backendUrlField;
+    private JCheckBox useExternalBackendCheckBox;
     private JButton fetchModelsButton;
     private JButton additionalSettingsButton;
     private AdditionalSettingsPanel additionalSettingsPanel;
@@ -53,10 +57,11 @@ public class SegmentationPanel extends JPanel {
 
     private Map<String, List<String>> modelsByType = new HashMap<>();
 
-    public SegmentationPanel(ImagePlus imp, List<Cell> cells, Consumer<List<Cell>> cellUpdateCallback) {
+    public SegmentationPanel(ImagePlus imp, List<Cell> cells, Consumer<List<Cell>> cellUpdateCallback, BackendManager backendManager) {
         this.imagePlus = imp;
         this.cells = cells;
         this.cellUpdateCallback = cellUpdateCallback;
+        this.backendManager = backendManager;
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -72,6 +77,14 @@ public class SegmentationPanel extends JPanel {
         // Backend URL (top item)
         backendUrlField = new JTextField("http://localhost:8000");
         add(createLabeledField("Backend URL:", backendUrlField));
+
+        // External backend toggle
+        useExternalBackendCheckBox = new JCheckBox("Use external backend");
+        useExternalBackendCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        useExternalBackendCheckBox.setSelected(false);
+        useExternalBackendCheckBox.addActionListener(e -> handleBackendToggle());
+        add(Box.createVerticalStrut(5));
+        add(useExternalBackendCheckBox);
 
         // Fetch Models Button
         fetchModelsButton = new JButton("Fetch Models");
@@ -163,12 +176,54 @@ public class SegmentationPanel extends JPanel {
 
         add(Box.createVerticalStrut(10));
         add(statusContainer);
+
+        // Auto-start bundled backend by default
+        SwingUtilities.invokeLater(this::startBundledBackendAsync);
     }
 
     public void setBackendUrl(String backendUrl) {
         if (backendUrl != null && !backendUrl.trim().isEmpty()) {
             backendUrlField.setText(backendUrl.trim());
         }
+    }
+
+    private void handleBackendToggle() {
+        if (useExternalBackendCheckBox.isSelected()) {
+            if (backendManager != null) {
+                backendManager.stop();
+            }
+            backendUrlField.setEnabled(true);
+            setStatusText("Using external backend.", new Color(76, 175, 80));
+        } else {
+            startBundledBackendAsync();
+        }
+    }
+
+    private void startBundledBackendAsync() {
+        if (backendManager == null || backendStarting) return;
+        backendStarting = true;
+        backendUrlField.setEnabled(false);
+        setStatusText("Starting bundled backend...", Color.ORANGE);
+
+        new Thread(() -> {
+            try {
+                String url = backendManager.start();
+                SwingUtilities.invokeLater(() -> {
+                    backendUrlField.setText(url);
+                    backendUrlField.setEnabled(false);
+                    useExternalBackendCheckBox.setSelected(false);
+                    setStatusText("Bundled backend ready.", new Color(76, 175, 80));
+                    backendStarting = false;
+                });
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    backendUrlField.setEnabled(true);
+                    useExternalBackendCheckBox.setSelected(true);
+                    setStatusText("Failed to start bundled backend. Use external URL.", Color.RED);
+                    backendStarting = false;
+                });
+            }
+        }).start();
     }
 
     private JPanel createLabeledSpinner(String labelText, int value, int min, int max, JSpinner spinner) {
