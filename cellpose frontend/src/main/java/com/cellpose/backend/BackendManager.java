@@ -30,6 +30,14 @@ public class BackendManager {
     private String backendUrl;
     private Path backendDir;
 
+    public boolean isBundledBackendAvailable() {
+        try {
+            return getClass().getClassLoader().getResource(RESOURCE_ROOT) != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public synchronized String start() throws IOException {
         if (process != null && process.isAlive()) {
             return backendUrl;

@@ -177,8 +177,16 @@ public class SegmentationPanel extends JPanel {
         add(Box.createVerticalStrut(10));
         add(statusContainer);
 
-        // Auto-start bundled backend by default
-        SwingUtilities.invokeLater(this::startBundledBackendAsync);
+        // Auto-start bundled backend by default (only if bundled resources exist)
+        SwingUtilities.invokeLater(() -> {
+            if (backendManager != null && backendManager.isBundledBackendAvailable()) {
+                startBundledBackendAsync();
+            } else {
+                useExternalBackendCheckBox.setSelected(true);
+                backendUrlField.setEnabled(true);
+                setStatusText("Bundled backend not found. Using external URL.", Color.ORANGE);
+            }
+        });
     }
 
     public void setBackendUrl(String backendUrl) {
@@ -189,6 +197,7 @@ public class SegmentationPanel extends JPanel {
 
     private void handleBackendToggle() {
         if (useExternalBackendCheckBox.isSelected()) {
+            backendStarting = false;
             if (backendManager != null) {
                 backendManager.stop();
             }
@@ -201,6 +210,12 @@ public class SegmentationPanel extends JPanel {
 
     private void startBundledBackendAsync() {
         if (backendManager == null || backendStarting) return;
+        if (!backendManager.isBundledBackendAvailable()) {
+            useExternalBackendCheckBox.setSelected(true);
+            backendUrlField.setEnabled(true);
+            setStatusText("Bundled backend not found. Using external URL.", Color.ORANGE);
+            return;
+        }
         backendStarting = true;
         backendUrlField.setEnabled(false);
         setStatusText("Starting bundled backend...", Color.ORANGE);
